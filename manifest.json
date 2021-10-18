@@ -1,7 +1,7 @@
 {
-  "name": "RLE sprite editor",
-  "short_name": "RLE edit",
-  "description": "Editor and converter for Run Length Encoded sprites",
+  "name": "Sketch Extractor",
+  "short_name": "Sk Ex",
+  "description": "Makes white of an image transparent",
   "background_color": "#282828",
   "theme_color": "#282828",
   "display": "standalone",

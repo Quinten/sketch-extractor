@@ -1,4 +1,4 @@
-const PRECACHE = 'rle-sprite-editor-001';
+const PRECACHE = 'sketch-extractor-001';
 const PRECACHE_URLS = [
     './',
     'index.html'
