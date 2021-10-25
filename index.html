@@ -26,12 +26,9 @@
     </style>
 </head>
 <body>
-<canvas id="canvas" class="block"></canvas>
+<canvas id="canvas" class="block" style="display:none;"></canvas>
 <div class="block">
-    <button onclick="window.location.hash = btoa(JSON.stringify(data)); copyStringToClipboard(window.location, this);">share</button>
-    <button onclick="copyStringToClipboard(data.frames, this)">string</button>
-    <button onclick="copyStringToClipboard(getCode(), this)">code</button>
-    <a href="#" id="exportButton" download="spritesheet.png"><button>sheet</button></a>
+    <a href="#" id="exportButton" style="display:none;" download="outlines.png"><button>download</button></a>
 </div>
 <div class="block">
     <input type="file" onchange="handleFile(this)">
@@ -44,16 +41,18 @@
 let frameWidth = 512;
 let frameHeight = 512;
 
-// the 2d drawing api
+canvas.width = frameWidth;
+canvas.height = frameHeight;
 let ctx = canvas.getContext('2d');
-//console.log(ctx);
+let tmpCanvas = document.createElement('canvas');
+let tmpCtx = tmpCanvas.getContext('2d');
+tmpCanvas.width = frameWidth;
+tmpCanvas.height = frameHeight;
 
 // resize canvas with window
 let wWidth = window.innerWidth;
 let wHeight = window.innerHeight;
 let onR = e => {
-    canvas.width = frameWidth;
-    canvas.height = frameHeight;
     let w = Math.min(wWidth - 40, wHeight / frameHeight * frameWidth - 40);
     let h = w / frameWidth * frameHeight;
     canvas.style.width = w + 'px';
@@ -84,65 +83,34 @@ let handleFile = el => {
         let src = fileReader.result;
         let img = new Image();
         img.addEventListener('load', _ => {
-            let nFramesW = Math.floor(img.width / frameWidth);
-            let nFramesH = Math.floor(img.height / frameHeight);
-            let nFrames = nFramesW * nFramesH;
-            let frames = [];
-            let colors = {};
-            let num = 64;
-            let tmpCanvas = document.createElement('canvas');
-            let tmpCtx = tmpCanvas.getContext('2d');
+            frameWidth = img.width;
+            frameHeight = img.height;
+            canvas.width = frameWidth;
+            canvas.height = frameHeight;
+            ctx.clearRect(0, 0, frameWidth, frameHeight)
             tmpCanvas.width = frameWidth;
             tmpCanvas.height = frameHeight;
-            while(frames.length < nFrames) {
-                let frame = '';
-                let i = frames.length;
-                let sx = i % nFramesW * frameWidth;
-                let sy = Math.floor(i / nFramesW) * frameHeight;
-                tmpCtx.clearRect(0, 0, frameWidth, frameHeight);
-                tmpCtx.drawImage(img, sx, sy, frameWidth, frameHeight, 0, 0, frameWidth, frameHeight);
-                while (frame.length < frameWidth * frameHeight) {
-                    let px = frame.length % frameWidth;
-                    let py = Math.floor(frame.length / frameWidth);
-                    let [r, g, b, a] = tmpCtx.getImageData(px, py, 1, 1).data;
-                    let color = '';
-                    if (a === 0) {
-                        color = 'transparent';
-                    } else if (a === 255) {
-                        color = '#' + r.toString(16) + g.toString(16) + b.toString(16);
-                    } else {
-                        color = `rgba(${r}, ${g}, ${b}, ${a/255})`;
-                    }
-                    let key = transparentKey;
-                    if (color !== 'transparent') {
-                        if (Object.keys(colors).map(c => colors[c]).indexOf(color) === -1) {
-                            while (key === transparentKey) {
-                                num = num + 1;
-                                key = String.fromCharCode(num);
-                                colors[key] = color;
-                            }
-                        } else {
-                            key = Object.keys(colors).reduce((acc, k) => (colors[k] === color) ? k : acc);
-                        }
-                    }
-                    frame = frame + key;
-                }
-                frames.push(encodedFrames(frame));
+            tmpCtx.clearRect(0, 0, frameWidth, frameHeight)
+            tmpCtx.drawImage(img, 0, 0, frameWidth, frameHeight, 0, 0, frameWidth, frameHeight);
+            let p = 0;
+            while (p < frameWidth * frameHeight) {
+                let px = p % frameWidth;
+                let py = Math.floor(p / frameWidth);
+                let [r, g, b, a] = tmpCtx.getImageData(px, py, 1, 1).data;
+                let alpha = 1 - (((r + g + b) / 3) / 255);
+                ctx.globalAlpha = alpha;
+                ctx.fillRect(px, py, 1, 1);
+                p = p + 1;
             }
-            data.colors = colors;
-            colorBlocks.innerHTML = '';
-            Object.keys(data.colors).forEach(key => {
-                colorBlocks.innerHTML = colorBlocks.innerHTML + getColorBlock(key, data.colors[key]);
-            });
-            data.frames = frames.join('|');
-            data.currentFrame = data.currentFrame;
-            data.nFramesWide = nFramesW;
+            onR();
+            canvas.style.display = 'block';
+            exportButton.href = canvas.toDataURL();
+            exportButton.style.display = 'inline';
         });
         img.src = src;
     }, false);
     fileReader.readAsDataURL(file);
 };
-});
 
 </script>
 </body>
