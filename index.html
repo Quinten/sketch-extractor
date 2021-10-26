@@ -110,6 +110,8 @@ let handleFile = el => {
             loading.style.display = 'none';
         });
         loading.style.display = 'block';
+        canvas.style.display = 'none';
+        exportButton.style.display = 'none';
         setTimeout(_ => {
             img.src = src;
         }, 150);
